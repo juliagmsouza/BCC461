@@ -1,0 +1,47 @@
+<!doctype html>
+<html>
+<head>
+  <title>Jogo de Damas - Júlia Maia</title>
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.3/jquery.min.js"></script>
+  <link href="https://fonts.googleapis.com/css?family=Lato:400,700" rel="stylesheet">
+  <link href="style.css" rel="stylesheet">
+  <link rel="shortcut icon" href="favicon.ico" type="image/x-icon">
+  <link rel="shortcut icon" href="favicon.png" type="image/x-icon">
+  <link rel="icon" href="favicon.ico" type="image/x-icon">
+  <link rel="icon" href="favicon.png" type="image/x-icon">
+  <script src="script.js"></script>
+</head>
+<body>
+  <div class="coluna">
+    <div class="info">
+      <h1>Damas</h1>
+      <hr>
+    </div>
+    <div class="stats">
+      <h2>Estatísticas de Jogo</h2>
+      <div class="wrapper">
+      <div id="jogador1">
+        <h3>Jogador 1 (Top)</h3>
+      </div>
+      <div id="jogador2">
+        <h3>Jogador 2 (Bottom)</h3>
+      </div>
+      </div>
+      <div class="clearfix"></div>
+      <div class="jogada"></div>
+      <span id="vencedor"></span>
+      <button id="reiniciar">Reiniciar Partida</button>
+    </div>
+  </div>
+  <div class="coluna">
+    <div id="tabuleiro">
+      <div class="casas"></div>
+      <div class="pecas">
+        <div class="jogador1pecas">
+        </div>
+        <div class="jogador2pecas">
+        </div>
+      </div>
+  </div>
+</body>
+</html>
