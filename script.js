@@ -78,10 +78,6 @@ window.onload = function() {
         if(!this.rainha && (this.posicao[0] == 0 || this.posicao[0] ==7))
             this.fazrainha();
             this.calculapeso(); 
-            console.log("pesoooo ",this.peso);
-            if(this.jogador == 2){
-                //Tabuleiro.trocavezjogador();
-            }
             return true;
            
     };
@@ -163,7 +159,7 @@ window.onload = function() {
             if(dist(this.posicao[0], this.posicao[1], peca.posicao[0], peca.posicao[1]) == Math.sqrt(2)){
                 return 'regular';
             } else if (dist(this.posicao[0], this.posicao[1], peca.posicao[0], peca.posicao[1]) == 2* Math.sqrt(2)){
-                return 'salto'
+                return 'salto';
             }
         };
     }
@@ -226,17 +222,16 @@ window.onload = function() {
         },
         
         trocavezjogador: function (){
-            
+            console.log("tamo trocando de vez",this.jogadoratual)
             if(this.jogadoratual == 1){                
                 this.jogadoratual = 2;
-                this.ia.iamove();  
-                
-                $('.jogada').css("background", "linear-gradient(to right, transparent 50%, #16A8C7 50%)");
+                this.ia.iamove();
+                $('.jogada').css("background", "linear-gradient(to right, transparent 50%, #6ad40d 50%)");
             }
             else{
-                
-                this.jogadoratual = 1;
-                $('.jogada').css("background", "linear-gradient(to right,#16A8C7 50%, transparent 50%)");
+            this.jogadoratual = 1;
+                $('.jogada').css("background", "linear-gradient(to right, #6ad40d 50%, transparent 50%)");
+                   
             }
             this.sesalto()
             
@@ -294,24 +289,10 @@ window.onload = function() {
     Tabuleiro.iniciar();
 
     $('.peca').on("click", function (){
-        var selecionada;
         var vezjogador = ($(this).parent().attr("class").split(' ')[0] == "jogador" + Tabuleiro.jogadoratual + "pecas");
-        
+        console.log("vez jogador= ",$(this).attr('id'))
         if(vezjogador){
-            if(!Tabuleiro.capturamultipla && pecas[$(this).attr("id")].permitidomover){
-                if($(this). hasClass('selecionada')) selecionada = true;
-                $('.peca').each(function (index){
-                    $('.peca').eq(index).removeClass('selecionada')
-                });
-                if (!selecionada) {
-                    $(this).addClass('selecionada');
-                }
-            } else {
-                let permitido = "salto existe apenas para outras pecas, nao e permitido mover essa"
-                let multiplos = "salto continuo existe , voce precisa mover a mesma peca"
-                let mensagem = !Tabuleiro.capturamultipla ? permitido : multiplos
-                console.log(mensagem)
-            }
+           cliquePeca($(this).attr('id'))
         }
     });
 
@@ -324,32 +305,52 @@ window.onload = function() {
             var casaid = $(this).attr("id").replace(/casa/, '');
             var casa = casas[casaid];
             var peca = pecas[$('.selecionada').attr("id")];
-            var alcance = casa.alcance(peca);
-            if(alcance != 'invalido') {
-                if (alcance == 'salto'){    
-                    if (peca.capturaradversario(casa)){
-                        
-                        peca.mover(casa);
-                        
-                        if(peca.checarpulos()){
-                            peca.item.addClass('selecionada');
-                            Tabuleiro.capturamultipla = true;
-                        } else {
-                            Tabuleiro.trocavezjogador()
-                        }
-                    }
-                } else if (alcance == 'regular' && !Tabuleiro.capturaobrigatoria){
-                    if(!peca.checarpulos()){
-                        peca.mover(casa);
-                        Tabuleiro.trocavezjogador()
+            cliqueCasa(casa,peca);
+        }
+        
+    });
+    function cliquePeca(i){
+        var selecionada;
+        if(!Tabuleiro.capturamultipla && pecas[i].permitidomover){
+            if($('#'+i). hasClass('selecionada')) selecionada = true;
+            $('.peca').each(function (index){
+                $('.peca').eq(index).removeClass('selecionada')
+            });
+            if (!selecionada) {
+                $('#'+i).addClass('selecionada');
+            }
+        } else {
+            let permitido = "salto existe apenas para outras pecas, nao e permitido mover essa"
+            let multiplos = "salto continuo existe , voce precisa mover a mesma peca"
+            let mensagem = !Tabuleiro.capturamultipla ? permitido : multiplos
+            console.log(mensagem)
+        }
+    }
+    function cliqueCasa(casa,peca){
+        var alcance = casa.alcance(peca);
+        if(alcance != 'invalido') {
+            if (alcance == 'salto'){    
+                if (peca.capturaradversario(casa)){
+                    
+                    peca.mover(casa);
+                    
+                    if(peca.checarpulos()){
+                        peca.item.addClass('selecionada');
+                        Tabuleiro.capturamultipla = true;
                     } else {
-                        alert("Voce deve capturar adversario quando possivel");
+                        Tabuleiro.trocavezjogador()
                     }
+                }
+            } else if (alcance == 'regular' && !Tabuleiro.capturaobrigatoria){
+                if(!peca.checarpulos()){
+                    peca.mover(casa);
+                    Tabuleiro.trocavezjogador()
+                } else {
+                    alert("Voce deve capturar adversario quando possivel");
                 }
             }
         }
-    });
-
+    }
     function ia(Tabuleiro, pecas){
         this.Tabuleiro = Tabuleiro;
         this.pecas = pecas;
@@ -363,24 +364,43 @@ window.onload = function() {
         }
 
         this.iamove = function(){
-            
             //this.pecas[12].mover(casas[16]);
             this.aleatorio = Math.floor((Math.random()*12)+12);
-                while(this.aux != 1){                    
-                    this.aleatorio = Math.floor((Math.random()*12)+12);
+            this.aux = 0;
+            this.cont = -1
+            Tabuleiro.sesalto();
+            if(Tabuleiro.capturaobrigatoria){
+            for(let  i of pecas){
+                this.cont++;
+                if(this.cont>11){
+                for(let j of casas){
                     
+                    var alcance2 = j.alcance(i); 
+                    if (alcance2 == "salto"){
+                        cliquePeca(this.aleatorio);
+                        cliqueCasa(j,i);
+                        this.aux = 1; 
+                        
+                    }
+                }}
+            }}
+            else{
+            //verificar fim de jogo
+            while(this.aux != 1){                    
+                    this.aleatorio = Math.floor((Math.random()*12)+12);
+                    console.log("while é aqui")
                     for(let j of casas){
                         var alcance2 = j.alcance(this.pecas[this.aleatorio]);
-                        console.log("eu ", this.aleatorio)
-                        if (alcance2 = "regular"){
-                            this.pecas[this.aleatorio].mover(j);
-                            Tabuleiro.trocavezjogador();
+                        if (alcance2 == "regular"){
+                            cliquePeca(this.aleatorio);
+                            cliqueCasa(j,this.pecas[this.aleatorio]);
                             this.aux = 1;
                             
                         }
                     }
                     
-                }
+            }
+        }
             }
         }
 
