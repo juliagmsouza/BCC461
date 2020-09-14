@@ -1,14 +1,15 @@
-window.onload = function() {
-    var tabuleirojogo = [
-    [0, 1, 0, 1, 0, 1, 0, 1],
-    [1, 0, 1, 0, 1, 0, 1, 0],
-    [0, 1, 0, 1, 0, 1, 0, 1],
-    [0, 0, 0, 0, 0, 0, 0, 0],
-    [0, 0, 0, 0, 0, 0, 0, 0],
-    [2, 0, 2, 0, 2, 0, 2, 0],
-    [0, 2, 0, 2, 0, 2, 0, 2],
-    [2, 0, 2, 0, 2, 0, 2, 0]
-  ];
+    window.onload = function() {
+        var tabuleirojogo = [
+        [0, 1, 0, 1, 0, 1, 0, 1],
+        [1, 0, 1, 0, 1, 0, 1, 0],
+        [0, 1, 0, 1, 0, 1, 0, 1],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [0, 0, 0, 0, 0, 0, 0, 0],
+        [2, 0, 2, 0, 2, 0, 2, 0],
+        [0, 2, 0, 2, 0, 2, 0, 2],
+        [2, 0, 2, 0, 2, 0, 2, 0]
+    ]
+    var tabuleirojogo2 = [[[]]];
   var pesocasas = [
         [0, 4, 0, 4, 0, 4, 0, 4],
         [4, 0, 3, 0, 3, 0, 3, 0],
@@ -20,8 +21,10 @@ window.onload = function() {
         [4, 0, 4, 0, 4, 0, 4, 0]
       ];
 
+
     var pecas = [];
     var casas = [];
+    
 
     var dist = function (x1, y1, x2, y2) {
         return Math.sqrt(Math.pow((x1 - x2), 2) + Math.pow((y1 - y2), 2));
@@ -44,19 +47,7 @@ window.onload = function() {
         this.rainha = true;
     }
 
-    this.calculapeso = function (){
-        if (this.rainha) 
-            this.peso = 10;
-        
-        else if (!this.rainha && this.jogador == 1){
-            if(this.posicao[0] == 6) this.peso = 7;
-        }
-
-        else if (!this.rainha && this.jogador == 2){
-            if(this.posicao[0] == 1) this.peso = 7;
-        }
-
-    }
+    
 
     this.mover = function (casa){
         this.item.removeClass('selecionada');
@@ -77,7 +68,6 @@ window.onload = function() {
 
         if(!this.rainha && (this.posicao[0] == 0 || this.posicao[0] ==7))
             this.fazrainha();
-            this.calculapeso(); 
             return true;
            
     };
@@ -129,6 +119,7 @@ window.onload = function() {
 
     this.remove = function(){
         this.item.css ("display", "none");
+        this.peso = 0;
         if(this.jogador == 1){
             $('#jogador2').append("<div class='pecacapturada'></div");
             Tabuleiro.placar.jogador2 += 1;
@@ -175,6 +166,39 @@ window.onload = function() {
         capturamultipla: false,
         casasitem: $('div.casas'),
         dictionary: ["0vmin", "10vmin", "20vmin", "30vmin", "40vmin", "50vmin", "60vmin", "70vmin", "80vmin", "90vmin"],
+        forcatabuleiro: function (){
+            this.soma = 0;
+            this.cont = 0;
+            Tabuleiro.calculapeso();
+            for (let i of pecas)
+            {
+                
+                if(i.peso!=0){
+                    this.soma = this.soma + i.peso*pesocasas[i.posicao[0]][i.posicao[1]];
+                    }
+                    this.cont++;
+            }
+            return this.soma;
+
+        },
+        calculapeso: function (){
+            for (let i of pecas){
+                if(i.peso != 0){
+                    i.peso = 5;
+                if (i.rainha) {            
+                    i.peso = 10;}
+                else if (!i.rainha &&i.jogador == 1){
+                    if(i.posicao[0] == 6) i.peso = 7;
+                }
+        
+                else if (!i.rainha && i.jogador == 2){
+                    if(i.posicao[0] == 1) i.peso =  7;
+                }
+                if (i.jogador == 2) {
+                    console.log("aloooo ",i.jogador)
+                i.peso = i.peso*(-1);
+                }}
+            }},
 
         iniciar: function() {
             this.ia = new ia(Tabuleiro, pecas);
@@ -199,7 +223,6 @@ window.onload = function() {
                     }
                 }
             }
-            
         },
         exibircasas: function (linha, coluna, contarcasas){
             this.casasitem.append("<div class='casa' id='casa" + contarcasas + "' style='top:" + this.dictionary[linha] + ";left:" + this.dictionary[coluna] + ";'></div");
@@ -225,9 +248,12 @@ window.onload = function() {
             console.log("tamo trocando de vez",this.jogadoratual)
             if(this.jogadoratual == 1){                
                 this.jogadoratual = 2;
-                this.ia.iamove();
                 $('.jogada').css("background", "linear-gradient(to right, transparent 50%, #6ad40d 50%)");
-            }
+
+                //this.ia.iamove();
+                this.ia.popInicial();
+                
+                    }
             else{
             this.jogadoratual = 1;
                 $('.jogada').css("background", "linear-gradient(to right, #6ad40d 50%, transparent 50%)");
@@ -311,6 +337,7 @@ window.onload = function() {
     });
     function cliquePeca(i){
         var selecionada;
+        console.log("I: ",i)
         if(!Tabuleiro.capturamultipla && pecas[i].permitidomover){
             if($('#'+i). hasClass('selecionada')) selecionada = true;
             $('.peca').each(function (index){
@@ -356,18 +383,20 @@ window.onload = function() {
         this.pecas = pecas;
         this.aleatorio = 0;
         this.aux = 0;
-
+        
         
 
-        if(this.jogadoratual==2){
-            this.Tabuleiro.sesalto();
-        }
-
+      
         this.iamove = function(){
             //this.pecas[12].mover(casas[16]);
+            console.log("Força do Tabuleiro:",Tabuleiro.forcatabuleiro());
             this.aleatorio = Math.floor((Math.random()*12)+12);
             this.aux = 0;
-            this.cont = -1
+            this.cont = -1;
+            this.menor=999;
+            this.casaescolhida;
+            var casaspossiveis = [];
+            var melhorespesos = [];
             Tabuleiro.sesalto();
             if(Tabuleiro.capturaobrigatoria){
             for(let  i of pecas){
@@ -377,10 +406,16 @@ window.onload = function() {
                     
                     var alcance2 = j.alcance(i); 
                     if (alcance2 == "salto"){
-                        cliquePeca(this.aleatorio);
+                        cliquePeca(this.cont);
                         cliqueCasa(j,i);
+                       if(i.checarpulos())
+                            for(k of casas){
+                                var alcance3 = k.alcance(i);
+                                if (alcance3 == "salto"){
+                                cliquePeca(this.cont);
+                                cliqueCasa(k,i); }  
+                            }
                         this.aux = 1; 
-                        
                     }
                 }}
             }}
@@ -388,20 +423,59 @@ window.onload = function() {
             //verificar fim de jogo
             while(this.aux != 1){                    
                     this.aleatorio = Math.floor((Math.random()*12)+12);
-                    console.log("while é aqui")
+                    this.cont = 0;
                     for(let j of casas){
                         var alcance2 = j.alcance(this.pecas[this.aleatorio]);
                         if (alcance2 == "regular"){
-                            cliquePeca(this.aleatorio);
+                            casaspossiveis[this.cont] = j;
+                            melhorespesos[this.cont] = this.pecas[this.aleatorio].peso*pesocasas[j.posicao[0]][j.posicao[1]];
+                            this.cont++;
+                            /*cliquePeca(this.aleatorio);
                             cliqueCasa(j,this.pecas[this.aleatorio]);
-                            this.aux = 1;
-                            
+                            this.aux = 1;*/   
+                        }     
+                    }
+                    this.cont= 0;
+                    if(casaspossiveis.length > 0){
+                    for (let i of casaspossiveis){
+                        if (melhorespesos[this.cont]< this.menor) {
+                            this.casaescolhida=casaspossiveis[this.cont];
+                            this.menor=melhorespesos[this.cont];
                         }
                     }
+
+                    cliquePeca(this.aleatorio);
+                    cliqueCasa(this.casaescolhida,this.pecas[this.aleatorio]);
+                    this.aux = 1;
+
+                }
+                    
+
                     
             }
         }
             }
+       this.popInicial = function(){
+           this.tabuleiro = Tabuleiro.tabuleiro;
+            this.cont = 0;
+            for (let i of pecas){
+                for(let j of casas){
+                    var alcance2 = j.alcance(i);
+                    if(i.jogador == 2){
+                        if (alcance2 == "regular"){
+                            tabuleirojogo2[this.cont] = JSON.parse(JSON.stringify(this.tabuleiro));
+                            //perfect até aqui ^.^ linha anterior
+                            tabuleirojogo2[this.cont][j.posicao[0]][j.posicao[1]] = 2;
+                            tabuleirojogo2[this.cont][i.posicao[0]][i.posicao[1]] = 0;
+                            console.log("Tabuleiro ",this.cont,": ",tabuleirojogo2[this.cont])
+                            this.cont++;
+                        }
+                    }
+                
+                }
+            }
+            
+        }
         }
 
     }
