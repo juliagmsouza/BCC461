@@ -9,7 +9,13 @@
         [0, 2, 0, 2, 0, 2, 0, 2],
         [2, 0, 2, 0, 2, 0, 2, 0]
     ]
-    var tabuleirojogo2 = [[[]]];
+    var individuo = { 
+    peca:0,
+    forca: 0,
+    casa:0,
+    tabuleirojogo2: [[]]
+};
+  var individuos = [];
   var pesocasas = [
         [0, 4, 0, 4, 0, 4, 0, 4],
         [4, 0, 3, 0, 3, 0, 3, 0],
@@ -20,11 +26,11 @@
         [0, 3, 0, 3, 0, 3, 0, 4],
         [4, 0, 4, 0, 4, 0, 4, 0]
       ];
-
-
+  
     var pecas = [];
     var casas = [];
-    
+    var pecassimuladas = [];
+    var casassimuladas = [];
 
     var dist = function (x1, y1, x2, y2) {
         return Math.sqrt(Math.pow((x1 - x2), 2) + Math.pow((y1 - y2), 2));
@@ -169,8 +175,9 @@
         forcatabuleiro: function (){
             this.soma = 0;
             this.cont = 0;
+            
             Tabuleiro.calculapeso();
-            for (let i of pecas)
+            for (let i of pecassimuladas)
             {
                 
                 if(i.peso!=0){
@@ -182,7 +189,8 @@
 
         },
         calculapeso: function (){
-            for (let i of pecas){
+            
+            for (let i of pecassimuladas){
                 if(i.peso != 0){
                     i.peso = 5;
                 if (i.rainha) {            
@@ -195,7 +203,6 @@
                     if(i.posicao[0] == 1) i.peso =  7;
                 }
                 if (i.jogador == 2) {
-                    console.log("aloooo ",i.jogador)
                 i.peso = i.peso*(-1);
                 }}
             }},
@@ -224,10 +231,51 @@
                 }
             }
         },
+        iniciarsimulacao: function(individuo2){
+            this.individuo = JSON.parse(JSON.stringify( individuo2));
+            this.tabuleiro =JSON.parse(JSON.stringify( this.individuo.tabuleirojogo2));;
+            
+            var contarpecas = 0;
+            var contarcasas = 0;
+            for(let linha in this.tabuleiro){
+                for(let coluna in this.tabuleiro[linha]){
+                    if (linha % 2 == 1){
+                        if (coluna % 2 == 0){
+                            contarcasas = this.simularcasas(linha, coluna, contarcasas)
+                            
+                        }
+                    } else {
+                        if (coluna % 2 == 1){
+                            contarcasas = this.simularcasas(linha, coluna, contarcasas)
+                        }
+                    }
+                    if( this.tabuleiro[linha][coluna] == 1){
+                        contarpecas = this.simularpecas(1, linha, coluna, contarpecas)
+                    } else if (this.tabuleiro[linha][coluna] == 2){
+                        contarpecas = this.simularpecas(2, linha, coluna, contarpecas)
+                    }
+                }
+            
+            }
+            
+            this.individuo.forca = Tabuleiro.forcatabuleiro();
+            return this.individuo.forca;
+        
+        },
         exibircasas: function (linha, coluna, contarcasas){
             this.casasitem.append("<div class='casa' id='casa" + contarcasas + "' style='top:" + this.dictionary[linha] + ";left:" + this.dictionary[coluna] + ";'></div");
             casas[contarcasas]=new Casa($("#casa" + contarcasas), [parseInt(linha), parseInt(coluna)]);
             return contarcasas +1
+        },
+
+        simularcasas: function(linha,coluna,contarcasas){
+            casassimuladas[contarcasas]=new Casa($("#casa" + contarcasas), [parseInt(linha), parseInt(coluna)]);
+            return contarcasas +1
+        },
+
+        simularpecas: function(numerojogador, linha, coluna, contarpecas){
+            pecassimuladas[contarpecas] = new Peca($("#" + contarpecas), [parseInt(linha), parseInt(coluna)]);
+            return contarpecas + 1;
         },
 
         exibirpecas: function (numerojogador, linha, coluna, contarpecas){
@@ -250,8 +298,7 @@
                 this.jogadoratual = 2;
                 $('.jogada').css("background", "linear-gradient(to right, transparent 50%, #6ad40d 50%)");
 
-                //this.ia.iamove();
-                this.ia.popInicial();
+                this.ia.iamove();
                 
                     }
             else{
@@ -337,7 +384,6 @@
     });
     function cliquePeca(i){
         var selecionada;
-        console.log("I: ",i)
         if(!Tabuleiro.capturamultipla && pecas[i].permitidomover){
             if($('#'+i). hasClass('selecionada')) selecionada = true;
             $('.peca').each(function (index){
@@ -355,6 +401,7 @@
     }
     function cliqueCasa(casa,peca){
         var alcance = casa.alcance(peca);
+        console.log("tamo aquiuuiui")
         if(alcance != 'invalido') {
             if (alcance == 'salto'){    
                 if (peca.capturaradversario(casa)){
@@ -395,8 +442,7 @@
             this.cont = -1;
             this.menor=999;
             this.casaescolhida;
-            var casaspossiveis = [];
-            var melhorespesos = [];
+            var possibilidades = [];
             Tabuleiro.sesalto();
             if(Tabuleiro.capturaobrigatoria){
             for(let  i of pecas){
@@ -420,27 +466,31 @@
                 }}
             }}
             else{
+            //this.popInicial();    
             //verificar fim de jogo
-            while(this.aux != 1){                    
+          while(this.aux != 1){                    
                     this.aleatorio = Math.floor((Math.random()*12)+12);
                     this.cont = 0;
                     for(let j of casas){
                         var alcance2 = j.alcance(this.pecas[this.aleatorio]);
                         if (alcance2 == "regular"){
-                            casaspossiveis[this.cont] = j;
-                            melhorespesos[this.cont] = this.pecas[this.aleatorio].peso*pesocasas[j.posicao[0]][j.posicao[1]];
+                            individuo.casa = j;
+                            individuo.peso = this.pecas[this.aleatorio].peso*pesocasas[j.posicao[0]][j.posicao[1]];
+                            individuo.peca = this.aleatorio;
+                            possibilidades[this.cont] = individuo;
                             this.cont++;
-                            /*cliquePeca(this.aleatorio);
+                            cliquePeca(this.aleatorio);
                             cliqueCasa(j,this.pecas[this.aleatorio]);
-                            this.aux = 1;*/   
+                            this.aux = 1;  
                         }     
                     }
                     this.cont= 0;
-                    if(casaspossiveis.length > 0){
-                    for (let i of casaspossiveis){
-                        if (melhorespesos[this.cont]< this.menor) {
-                            this.casaescolhida=casaspossiveis[this.cont];
-                            this.menor=melhorespesos[this.cont];
+                    
+                    if(possibilidades.length > 0){
+                    for (let i of possibilidades){
+                        if (i.peso < this.menor) {
+                            this.casaescolhida=i.casa;
+                            this.menor= i.peso;
                         }
                     }
 
@@ -458,24 +508,43 @@
        this.popInicial = function(){
            this.tabuleiro = Tabuleiro.tabuleiro;
             this.cont = 0;
-            for (let i of pecas){
+            this.cont2 = -1;
+            this.pecas = pecas;
+            for (let i of this.pecas){
                 for(let j of casas){
                     var alcance2 = j.alcance(i);
                     if(i.jogador == 2){
                         if (alcance2 == "regular"){
-                            tabuleirojogo2[this.cont] = JSON.parse(JSON.stringify(this.tabuleiro));
+                            individuo.tabuleirojogo2 = JSON.parse(JSON.stringify(this.tabuleiro));
                             //perfect até aqui ^.^ linha anterior
-                            tabuleirojogo2[this.cont][j.posicao[0]][j.posicao[1]] = 2;
-                            tabuleirojogo2[this.cont][i.posicao[0]][i.posicao[1]] = 0;
-                            console.log("Tabuleiro ",this.cont,": ",tabuleirojogo2[this.cont])
+                            individuo.tabuleirojogo2[j.posicao[0]][j.posicao[1]] = 2;
+                            individuo.tabuleirojogo2[i.posicao[0]][i.posicao[1]] = 0;
+                            individuo.peca = this.cont2++;
+                            individuo.casa = j; 
+                            
+                            individuos[this.cont] = jQuery.extend(true, {}, individuo)
                             this.cont++;
                         }
                     }
-                
+                  
                 }
+                this.cont2++;
             }
+         for(let i of individuos){
             
+             i.forca = Tabuleiro.iniciarsimulacao(i)
+             //console.log("Forca simulada:  ",i.forca)
+
+         }  
+        individuos.sort(function(a, b) {
+            return parseFloat(a.forca) - parseFloat(b.forca);
+        }); 
+        console.log("peca escolhida: ",this.pecas[individuos[0].peca])
+        console.log("casa escolhida: ",individuos[0].casa)
+        cliquePeca(individuos[0].peca);
+        cliqueCasa(individuos[0].casa, this.pecas[individuos[0].peca]);
         }
+        
         }
 
     }
