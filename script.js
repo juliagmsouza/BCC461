@@ -13,8 +13,13 @@
     peca:0,
     forca: 0,
     casa:0,
-    tabuleirojogo2: [[]]
+    tabuleirojogo2: [[]],
+    ativacao: []
 };
+    
+
+    //const tamPopInicial= 10;
+
   var individuos = [];
   var pesocasas = [
         [0, 4, 0, 4, 0, 4, 0, 4],
@@ -26,6 +31,8 @@
         [0, 3, 0, 3, 0, 3, 0, 4],
         [4, 0, 4, 0, 4, 0, 4, 0]
       ];
+
+    //var primeirageracao =[[],[],[],[],[],[],[],[],[],[]];
   
     var pecas = [];
     var casas = [];
@@ -172,11 +179,19 @@
         capturamultipla: false,
         casasitem: $('div.casas'),
         dictionary: ["0vmin", "10vmin", "20vmin", "30vmin", "40vmin", "50vmin", "60vmin", "70vmin", "80vmin", "90vmin"],
-        forcatabuleiro: function (){
+        forcatabuleiro: function (individuo3){
             this.soma = 0;
             this.cont = 0;
+            this.pesocasa = 0;
+            this.pesopecas = 0;
+            this.contagemdepecas = 0;
+            this.quantidadedecasas = 0;
+            this.ultimafileira = 0;
+            this.individuo = individuo3;
             
+
             Tabuleiro.calculapeso();
+            
             for (let i of pecassimuladas)
             {
                 
@@ -185,6 +200,9 @@
                     }
                     this.cont++;
             }
+
+
+            this.soma = this.pesocasa + this.pesopecas + this.contagemdepecas + this.quantidadedecasas + this.ultimafileira;
             return this.soma;
 
         },
@@ -297,8 +315,8 @@
             if(this.jogadoratual == 1){                
                 this.jogadoratual = 2;
                 $('.jogada').css("background", "linear-gradient(to right, transparent 50%, #6ad40d 50%)");
-
-                this.ia.iamove();
+                this.ia.gerajogadas();
+                //this.ia.iamove();
                 
                     }
             else{
@@ -466,7 +484,7 @@
                 }}
             }}
             else{
-            //this.popInicial();    
+            //this.gerajogadas();    
             //verificar fim de jogo
           while(this.aux != 1){                    
                     this.aleatorio = Math.floor((Math.random()*12)+12);
@@ -505,7 +523,54 @@
             }
         }
             }
-       this.popInicial = function(){
+       this.popinicial = function(){
+        this.vetor = [];
+        this.aux = -1;
+        while(this.aux == -1){    
+            for(let i=0;i<5;i++){
+                this.vetor[i] = Math.round((Math.random()))
+                
+            }
+            this.aux = this.vetor.indexOf(1);
+            }
+        return this.vetor;
+        }
+        //console.log("primeira geração completa: ",primeirageracao)
+       
+
+       this.contagemdepecas = function() {
+            return ((Tabuleiro.placar.jogador1-Tabuleiro.placar.jogador2)*2)
+       }
+       this.contagemcasasvalidas = function(){
+           this.casas = casas;
+           this.pecas = pecas;
+           this.cont1 = 0;
+           this.cont2 = 0;
+           for(let i of this.pecas){
+               for(let j of this.casas){
+                   var aux = j.alcance(i)
+                   if (i.jogador == 1 & aux != "invalido") this.cont1++;
+                   else if (i.jogador == 2 & aux != "invalido") this.cont2;
+               }
+           }
+           return this.cont1 - this.cont2;
+       }
+
+       this.ultimafila = function(tab){
+        this.tabuleiro = tab;
+        this.cont1 = 0;
+        this.cont2 = 0;
+        for(i=0;i<8;i++){
+            for(j=0;j<8;j++){
+                if(i==0 && this.tabuleiro[i][j]==1)this.cont1++;
+                if(i==7 && this.tabuleiro[i][j]==2)this.cont2++;
+            }
+        }
+        return this.cont1 - this.cont2;
+       }
+
+
+       this.gerajogadas = function(){
            this.tabuleiro = Tabuleiro.tabuleiro;
             this.cont = 0;
             this.cont2 = -1;
@@ -521,7 +586,7 @@
                             individuo.tabuleirojogo2[i.posicao[0]][i.posicao[1]] = 0;
                             individuo.peca = this.cont2++;
                             individuo.casa = j; 
-                            
+                            individuo.avaliacao = this.popinicial();
                             individuos[this.cont] = jQuery.extend(true, {}, individuo)
                             this.cont++;
                         }
@@ -531,8 +596,8 @@
                 this.cont2++;
             }
          for(let i of individuos){
-            
-             i.forca = Tabuleiro.iniciarsimulacao(i)
+             console.log("avaliacao: ",i.avaliacao);
+             //i.forca = Tabuleiro.iniciarsimulacao(i)
              //console.log("Forca simulada:  ",i.forca)
 
          }  
@@ -545,6 +610,5 @@
         cliqueCasa(individuos[0].casa, this.pecas[individuos[0].peca]);
         }
         
-        }
-
     }
+}    
