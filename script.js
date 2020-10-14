@@ -547,12 +547,12 @@ window.onload = function () {
             this.cont = 0;
             //console.log("casas valida: ",Tabuleiro.casavalida(this.individuo.casa.posicao[1]+1,this.individuo.casa.posicao[0]+1))
             if (Tabuleiro.casavalida(this.individuo.casa.posicao[1] - 1, this.individuo.casa.posicao[0] - 1))
-                if (this.tabuleiroavaliacao[this.individuo.casa.posicao[0] - 1][this.individuo.casa.posicao[1] - 1] == 1) {
+                if (this.tabuleiroavaliacao[this.individuo.casa.posicao[1] - 1][this.individuo.casa.posicao[0] - 1] == 1) {
                     this.cont = this.cont - 2;
                     //console.log("tamo aqui 3")
                 }
             if (Tabuleiro.casavalida(this.individuo.casa.posicao[1] - 1, this.individuo.casa.posicao[0] + 1))
-                if (this.tabuleiroavaliacao[this.individuo.casa.posicao[0] - 1][this.individuo.casa.posicao[1] + 1] == 1) {
+                if (this.tabuleiroavaliacao[this.individuo.casa.posicao[1] - 1][this.individuo.casa.posicao[0] + 1] == 1) {
                     this.cont = this.cont - 2;
                     //console.log("tamo aqui 4")
                 }
