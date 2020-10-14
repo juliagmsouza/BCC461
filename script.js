@@ -1,6 +1,9 @@
 window.onload = function () {
     const taxacrossover = 0.4;
-    const ngeracoes = 10;
+    const competicao = true;
+    const ngeracoes = 20;
+    const qntcaracteristicas = 6;
+
     var tabuleirojogo = [
         [0, 1, 0, 1, 0, 1, 0, 1],
         [1, 0, 1, 0, 1, 0, 1, 0],
@@ -13,11 +16,11 @@ window.onload = function () {
     ]
     var individuo = {
         peca: 0,
-        forca: 0,
+        fitness: 0,
         casa: 0,
-        tabuleirojogo2: [[]],
+        tabuleirosimulacaoindividuo: [[]],
         avaliacao: [],
-        probabilidade: 0
+        PC: 0
     };
 
     //const tamPopInicial= 10;
@@ -28,10 +31,10 @@ window.onload = function () {
     var pesocasas = [
         [0, 4, 0, 4, 0, 4, 0, 4],
         [4, 0, 3, 0, 3, 0, 3, 0],
-        [0, 3, 0, 2, 0, 2, 0, 4],
-        [4, 0, 2, 0, 1, 0, 3, 0],
-        [0, 3, 0, 1, 0, 2, 0, 4],
-        [4, 0, 2, 0, 2, 0, 3, 0],
+        [0, 3, 0, 2, 0, 2, 0, 2],
+        [1, 0, 2, 0, 4, 0, 3, 0],
+        [0, 3, 0, 4, 0, 2, 0, 1],
+        [2, 0, 2, 0, 2, 0, 3, 0],
         [0, 3, 0, 3, 0, 3, 0, 4],
         [4, 0, 4, 0, 4, 0, 4, 0]
     ];
@@ -48,7 +51,6 @@ window.onload = function () {
     }
 
     function Peca(item, posicao, tab4) {
-
         this.peso = 5;
         this.permitidomover = true;
         this.item = item;
@@ -57,7 +59,6 @@ window.onload = function () {
         if (tab4[this.posicao[0]][this.posicao[1]] == 1)
             this.jogador = 1;
         else if (tab4[this.posicao[0]][this.posicao[1]] == 2) this.jogador = 2;
-
         this.rainha = false;
         this.fazrainha = function () {
             this.item.css("backgroundImage", "url('img/king" + this.jogador + ".png')");
@@ -69,7 +70,6 @@ window.onload = function () {
         this.mover = function (casa) {
             this.item.removeClass('selecionada');
             if (!Tabuleiro.casavalida(casa.posicao[0], casa.posicao[1])) {
-                console.log("tamo aqui no movimentos: ", casa.posicao)
                 return false;
             }
             if (this.jogador == 1 && this.rainha == false) {
@@ -186,15 +186,15 @@ window.onload = function () {
         casasitem: $('div.casas'),
         dictionary: ["0vmin", "10vmin", "20vmin", "30vmin", "40vmin", "50vmin", "60vmin", "70vmin", "80vmin", "90vmin"],
 
-        forcatabuleiro: function (individuo3) {
+        fitnesstabuleiro: function (solucao) {
             this.soma = 0;
             this.cont = 0;
-            this.pesocasa1 = 0;
-            this.pesocasa2 = 0;
+            this.pesocasajogador1 = 0;
+            this.pesocasajogador2 = 0;
             this.pesopecas = 0;
             this.contagemdepecas = 0;
             this.ultimafileira = 0;
-            this.individuo = individuo3;
+            this.individuo = solucao;
 
 
             Tabuleiro.calculapeso();
@@ -203,20 +203,22 @@ window.onload = function () {
                 if (i.peso != 0) {
                     this.pesopecas = this.pesopecas + i.peso;
                     if (i.jogador == 1) {
-                        this.pesocasa1 = this.pesocasa1 + pesocasas[i.posicao[0]][i.posicao[1]];
+                        this.pesocasajogador1 = this.pesocasajogador1 + pesocasas[i.posicao[0]][i.posicao[1]];
                         this.cont++;
                     }
                     else {
-                        this.pesocasa2 = this.pesocasa2 + pesocasas[i.posicao[0]][i.posicao[1]];
+                        this.pesocasajogador2 = this.pesocasajogador2 + pesocasas[i.posicao[0]][i.posicao[1]];
                     }
                 }
 
             }
-            this.contagemdepecas = this.ia.contagemdepecas();
-            this.ultimafileira = this.ia.ultimafila(this.individuo.tabuleirojogo2);
-            this.soma = this.individuo.avaliacao[0] * (this.pesocasa2 - this.pesocasa1) + this.individuo.avaliacao[1] * this.pesopecas + this.individuo.avaliacao[2] * this.contagemdepecas + this.individuo.avaliacao[3] * this.ultimafileira;
 
-            return this.soma;
+            this.contagemdepecas = this.ia.contagemdepecas();
+            this.ultimafileira = this.ia.ultimafila(this.individuo.tabuleirosimulacaoindividuo);
+            this.soma = (this.individuo.avaliacao[0] * (this.pesocasajogador2 - this.pesocasajogador1) + this.individuo.avaliacao[1] * this.pesopecas +
+            this.individuo.avaliacao[2] * this.contagemdepecas + this.individuo.avaliacao[3] * this.ultimafileira +
+            this.individuo.avaliacao[4] * this.ia.jogadaSegura(this.individuo) + this.individuo.avaliacao[5] * this.ia.dominiocentral(this.individuo))/6
+             return this.soma;
 
         },
         calculapeso: function () {
@@ -267,11 +269,11 @@ window.onload = function () {
         },
         iniciarsimulacao: function (individuo2) {
             this.individuo = JSON.parse(JSON.stringify(individuo2));
-            this.tabuleiro3 = JSON.parse(JSON.stringify(this.individuo.tabuleirojogo2));;
+            this.tabuleirosimulado = JSON.parse(JSON.stringify(this.individuo.tabuleirosimulacaoindividuo));;
             var contarpecas = 0;
             var contarcasas = 0;
-            for (let linha in this.tabuleiro3) {
-                for (let coluna in this.tabuleiro3[linha]) {
+            for (let linha in this.tabuleirosimulado) {
+                for (let coluna in this.tabuleirosimulado[linha]) {
                     if (linha % 2 == 1) {
                         if (coluna % 2 == 0) {
                             contarcasas = this.simularcasas(linha, coluna, contarcasas)
@@ -282,17 +284,17 @@ window.onload = function () {
                             contarcasas = this.simularcasas(linha, coluna, contarcasas)
                         }
                     }
-                    if (this.tabuleiro3[linha][coluna] == 1) {
+                    if (this.tabuleirosimulado[linha][coluna] == 1) {
                         contarpecas = this.simularpecas(1, linha, coluna, contarpecas)
-                    } else if (this.tabuleiro3[linha][coluna] == 2) {
+                    } else if (this.tabuleirosimulado[linha][coluna] == 2) {
                         contarpecas = this.simularpecas(2, linha, coluna, contarpecas)
                     }
                 }
 
             }
-            this.individuo.forca = Tabuleiro.forcatabuleiro(this.individuo);
+            this.individuo.fitness = Tabuleiro.fitnesstabuleiro(this.individuo);
 
-            return this.individuo.forca;
+            return this.individuo.fitness;
 
         },
         exibircasas: function (linha, coluna, contarcasas) {
@@ -307,7 +309,7 @@ window.onload = function () {
         },
 
         simularpecas: function (numerojogador, linha, coluna, contarpecas) {
-            pecassimuladas[contarpecas] = new Peca($("#" + contarpecas), [parseInt(linha), parseInt(coluna)], this.tabuleiro3);
+            pecassimuladas[contarpecas] = new Peca($("#" + contarpecas), [parseInt(linha), parseInt(coluna)], this.tabuleirosimulado);
             return contarpecas + 1;
         },
 
@@ -395,7 +397,6 @@ window.onload = function () {
 
     $('.peca').on("click", function () {
         var vezjogador = ($(this).parent().attr("class").split(' ')[0] == "jogador" + Tabuleiro.jogadoratual + "pecas");
-        console.log("vez jogador= ", $(this).attr('id'))
         if (vezjogador) {
             cliquePeca($(this).attr('id'))
         }
@@ -483,14 +484,14 @@ window.onload = function () {
                     this.cont++;
                     if (this.cont > 12) {
                         for (let j of casas) {
-                            var alcance2 = j.alcance(i);
-                            if (alcance2 == "salto" && this.aux != 1) {
+                            var alcancesimulado = j.alcance(i);
+                            if (alcancesimulado == "salto" && this.aux != 1) {
                                 cliquePeca(this.cont);
                                 cliqueCasa(j, i);
                                 if (i.checarpulos()) {
                                     for (k of casas) {
-                                        var alcance3 = k.alcance(i);
-                                        if (alcance3 == "salto") {
+                                        var alcancecapturamultipla = k.alcance(i);
+                                        if (alcancecapturamultipla == "salto") {
                                             cliquePeca(this.cont);
                                             cliqueCasa(k, i);
                                         }
@@ -503,23 +504,23 @@ window.onload = function () {
                 }
             }
             else {
-                if(this.aux == 0){
-                this.gerajogadas();
-                this.melhorjogada();
+                if (this.aux == 0) {
+                    this.gerajogadas();
+                    this.melhorjogada();
                 }
             }
         }
         this.popinicial = function () {
-            this.vetor = [];
+            this.vetorbinario = [];
             this.aux = -1;
             while (this.aux == -1) {
-                for (let i = 0; i < 4; i++) {
-                    this.vetor[i] = Math.round((Math.random()))
+                for (let i = 0; i < qntcaracteristicas; i++) {
+                    this.vetorbinario[i] = Math.round((Math.random()))
 
                 }
-                this.aux = this.vetor.indexOf(1);
+                this.aux = this.vetorbinario.indexOf(1);
             }
-            return this.vetor;
+            return this.vetorbinario;
         }
 
 
@@ -540,20 +541,104 @@ window.onload = function () {
             return this.cont2 - this.cont1;
         }
 
+        this.jogadaSegura = function (solucao) {
+            this.individuo = solucao;
+            this.tabuleiroavaliacao = this.individuo.tabuleirosimulacaoindividuo;
+            this.cont = 0;
+            //console.log("casas valida: ",Tabuleiro.casavalida(this.individuo.casa.posicao[1]+1,this.individuo.casa.posicao[0]+1))
+            if (Tabuleiro.casavalida(this.individuo.casa.posicao[1] - 1, this.individuo.casa.posicao[0] - 1))
+                if (this.tabuleiroavaliacao[this.individuo.casa.posicao[0] - 1][this.individuo.casa.posicao[1] - 1] == 1) {
+                    this.cont = this.cont - 2;
+                    //console.log("tamo aqui 3")
+                }
+            if (Tabuleiro.casavalida(this.individuo.casa.posicao[1] - 1, this.individuo.casa.posicao[0] + 1))
+                if (this.tabuleiroavaliacao[this.individuo.casa.posicao[0] - 1][this.individuo.casa.posicao[1] + 1] == 1) {
+                    this.cont = this.cont - 2;
+                    //console.log("tamo aqui 4")
+                }
+            return this.cont;
+        }
+
+        this.dominiocentral = function (solucao) {
+            this.individuo = solucao;
+            this.tabuleiroavaliacao = this.individuo.tabuleirosimulacaoindividuo;
+            this.cont = 0;
+            if (this.tabuleiroavaliacao[2][3] == 1) {
+                this.cont = this.cont - 1;
+            }
+            else
+                if (this.tabuleiroavaliacao[2][3] == 2) {
+                    this.cont = this.cont + 1;
+                }
+            if (this.tabuleiroavaliacao[2][5] == 1) {
+                this.cont = this.cont - 1;
+            }
+            else
+                if (this.tabuleiroavaliacao[2][5] == 2) {
+                    this.cont = this.cont + 1;
+                }
+            if (this.tabuleiroavaliacao[3][2] == 1) {
+                this.cont = this.cont - 1;
+            }
+            else
+                if (this.tabuleiroavaliacao[3][2] == 2) {
+                    this.cont = this.cont + 1;
+                }
+            if (this.tabuleiroavaliacao[3][4] == 1) {
+                this.cont = this.cont - 1;
+            }
+            else
+                if (this.tabuleiroavaliacao[3][4] == 2) {
+                    this.cont = this.cont + 1;
+                }
+            if (this.tabuleiroavaliacao[4][3] == 1) {
+                this.cont = this.cont - 1;
+            }
+            else
+                if (this.tabuleiroavaliacao[4][3] == 2) {
+                    this.cont = this.cont + 1;
+                }
+            if (this.tabuleiroavaliacao[4][5] == 1) {
+                this.cont = this.cont - 1;
+            }
+            else
+                if (this.tabuleiroavaliacao[4][5] == 2) {
+                    this.cont = this.cont + 1;
+                }
+            if (this.tabuleiroavaliacao[5][2] == 1) {
+                this.cont = this.cont - 1;
+            }
+            else
+                if (this.tabuleiroavaliacao[5][2] == 2) {
+                    this.cont = this.cont + 1;
+                }
+            if (this.tabuleiroavaliacao[5][4] == 1) {
+                this.cont = this.cont - 1;
+            }
+            else
+                if (this.tabuleiroavaliacao[5][4] == 2) {
+                    this.cont = this.cont + 1;
+                }
+            return this.cont;
+
+        }
+
 
         this.gerajogadas = function () {
             this.tabuleiro = JSON.parse(JSON.stringify(Tabuleiro.tabuleiro));
             this.cont = 0;
             this.cont2 = 0;
             this.pecas = pecas;
+            this.contNovos = 0;
+            this.individuounico = true;
             for (let i of this.pecas) {
                 for (let j of casas) {
-                    var alcance2 = j.alcance(i);
+                    var alcancesimulado = j.alcance(i);
                     if (i.jogador == 2) {
-                        if (alcance2 == "regular") {
-                            individuo.tabuleirojogo2 = JSON.parse(JSON.stringify(this.tabuleiro));
-                            individuo.tabuleirojogo2[j.posicao[0]][j.posicao[1]] = 2;
-                            individuo.tabuleirojogo2[i.posicao[0]][i.posicao[1]] = 0;
+                        if (alcancesimulado == "regular") {
+                            individuo.tabuleirosimulacaoindividuo = JSON.parse(JSON.stringify(this.tabuleiro));
+                            individuo.tabuleirosimulacaoindividuo[j.posicao[0]][j.posicao[1]] = 2;
+                            individuo.tabuleirosimulacaoindividuo[i.posicao[0]][i.posicao[1]] = 0;
                             individuo.peca = this.cont2;
                             individuo.casa = j;
                             individuo.avaliacao = this.popinicial();
@@ -571,19 +656,26 @@ window.onload = function () {
             for (k = 0; k < ngeracoes; k++) {
                 pais = this.selecionapais();
                 this.crossover();
-                console.log("novos individuos: ", novosindividuos);
                 for (let i of novosindividuos) {
-                    individuos.push(i);
+                    for(let j of individuos){
+                        if(checaindividuosiguais(i,j))
+                            this.individuounico = false;    
+                    }
+                    if(this.individuounico){
+                        individuos.push(i);
+                        this.contNovos++;
+                    }
+                    //individuos.push(i);
                 }
                 this.avaliaindividuos();
                 this.ordenaindividuos();
-                for (i = 0; i < novosindividuos.length; i++) {
-
+                //ELITISMO
+                for (i = 0; i < this.contNovos; i++) {
                     individuos.pop();
                 }
                 this.contgeracoes++;
-                console.log("numero de gerações: ", this.contgeracoes)
                 novosindividuos = [];
+
 
                 /*for(let i of novosindividuos) {
                    individuos.pop();
@@ -595,8 +687,7 @@ window.onload = function () {
         this.avaliaindividuos = function () {
             for (let i of individuos) {
 
-                i.forca = Tabuleiro.iniciarsimulacao(i)
-
+                i.fitness = Tabuleiro.iniciarsimulacao(i)
 
             }
             this.ordenaindividuos();
@@ -605,7 +696,7 @@ window.onload = function () {
 
         this.ordenaindividuos = function () {
             individuos.sort(function (a, b) {
-                return parseFloat(a.forca) - parseFloat(b.forca);
+                return parseFloat(a.fitness) - parseFloat(b.fitness);
             });
             individuos.reverse();
         }
@@ -615,18 +706,18 @@ window.onload = function () {
             this.cont = 0;
             this.soma = 0;
             this.n = individuos.length;
-            this.menor = individuos[this.n - 1].forca;
+            this.menor = individuos[this.n - 1].fitness;
             if (this.menor < 0) {
                 this.menor = this.menor * (-1);
             }
             for (let i of individuos) {
-                this.aux[this.cont] = i.forca + (this.menor) + 1;
+                this.aux[this.cont] = i.fitness + (this.menor) + 1;
                 this.soma = this.soma + this.aux[this.cont];
                 this.cont++;
             }
             this.cont = 0;
             for (let i of individuos) {
-                i.probabilidade = this.aux[this.cont] / this.soma;
+                i.PC = this.aux[this.cont] / this.soma;
                 this.cont++;
 
             }
@@ -640,7 +731,7 @@ window.onload = function () {
                 this.aux = 0;
                 this.soma = 0;
                 for (let i of individuos) {
-                    this.soma = this.soma + i.probabilidade;
+                    this.soma = this.soma + i.PC;
                     if (this.sorteio <= this.soma && this.aux == 0) {
                         this.paisescolhidos.push(i);
                         this.aux = 1
@@ -652,7 +743,10 @@ window.onload = function () {
 
         this.crossover = function () {
             this.aux = [];
+            this.aux2 = [];
+            this.aux3 = [];
             this.cont = 0;
+            this.individuounico = true;
             for (let i of pais) {
                 this.aux[this.cont] = i.avaliacao;
                 this.cont++;
@@ -661,16 +755,75 @@ window.onload = function () {
             for (let i of pais) {
                 novosindividuos.push(i)
             }
-            console.log(novosindividuos)
+            this.aux2 = JSON.parse(JSON.stringify(this.aux));
             for (let i of novosindividuos) {
-                i.avaliacao = this.aux[this.cont];
-                this.cont--;
+                
+                if(this.cont>0){
+                    this.aux3 = this.aux[this.cont].slice(0,3);
+                    this.aux2 = this.aux[this.cont-1].slice(-3);
+                }
+                else{
+                    this.aux3 = this.aux[this.cont].slice(0,3);
+                    this.aux2 = this.aux[this.aux.length-1].slice(-3); 
+                }
+                i.avaliacao = this.aux3.concat(this.aux2)
+               this.cont--;
             }
+            //console.log("novos individuos: ", novosindividuos)
+
+
         }
+        //funcionando
+        /*this.mutacao = function(solucao){
+            this.solucao = solucao;
+            this.sorteio = Math.random();
+            this.soma = 0;
+            this.aux = 0;
+            for(i =0;i<=3;i++){
+                this.soma = this.soma + 0.25;
+                if((this.sorteio < this.soma) && this.aux == 0){
+                    this.aux = 1;
+                   if(this.solucao.avaliacao[i]==0){
+                   }
+                   else{
+                    this.solucao.avaliacao[i]=0;
+                    }
+                }
+            }
+            return this.solucao;
+        }*/
 
         this.melhorjogada = function () {
+            console.log("individuos finais: ", individuos)
             cliquePeca(individuos[0].peca);
             cliqueCasa(individuos[0].casa, pecas[individuos[0].peca]);
+        }
+
+        function checaindividuosiguais(object1, object2) {
+            const keys1 = Object.keys(object1);
+            const keys2 = Object.keys(object2);
+
+            if (keys1.length !== keys2.length) {
+                return false;
+            }
+
+            for (const key of keys1) {
+                const val1 = object1[key];
+                const val2 = object2[key];
+                const areObjects = isObject(val1) && isObject(val2);
+                if (
+                    areObjects && !checaindividuosiguais(val1, val2) ||
+                    !areObjects && val1 !== val2
+                ) {
+                    return false;
+                }
+            }
+
+            return true;
+        }
+
+        function isObject(object) {
+            return object != null && typeof object === 'object';
         }
 
     }
